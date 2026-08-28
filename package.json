@@ -1,0 +1,40 @@
+{
+  "name": "machine-vision",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A browser-based visual instrument that turns local video analysis into procedural machine-vision graphics.",
+  "author": "Amir Mushich",
+  "license": "MIT",
+  "homepage": "https://amirmushich.com/lab",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/amirmushichge/machine-vision.git"
+  },
+  "keywords": [
+    "creative-coding",
+    "computer-vision",
+    "generative-art",
+    "react",
+    "video"
+  ],
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "19.2.6",
+    "react-dom": "19.2.6"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.0.2",
+    "typescript": "5.9.3",
+    "vite": "8.0.13"
+  },
+  "type": "module"
+}
