@@ -2,7 +2,7 @@
 * { box-sizing: border-box; }
 html, body { width: 100%; min-height: 100%; margin: 0; }
 html { background: var(--paper); }
-body { background: var(--paper); color: var(--ink); font-family: Manrope, 'Avenir Next', 'Helvetica Neue', Arial, sans-serif; font-weight: 400; overflow: hidden; text-rendering: geometricPrecision; }
+body { background: var(--paper); color: var(--ink); font-family: 'Avenir Next', 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: 400; overflow: hidden; text-rendering: geometricPrecision; }
 button, input { font: inherit; }
 button { color: inherit; }
 button:focus-visible, input:focus-visible, summary:focus-visible { outline: 1px solid #000; outline-offset: 3px; }

@@ -154,7 +154,7 @@ export function VisionControls({ config, preset, onChange, onPreset, onRandomize
           <ControlSlider label="Box strength" value={config.boxStrength} min={10} max={100} disabled={!config.boxesEnabled} onChange={(value) => onChange('boxStrength', value)} />
         </div>
       </details>
-      <p className="controls-footnote">Analysis runs locally in your browser. No frames leave this device.</p>
+      <p className="controls-footnote">Video, frames and exports stay on this device. Nothing is uploaded or stored.</p>
     </div>
   );
 }
