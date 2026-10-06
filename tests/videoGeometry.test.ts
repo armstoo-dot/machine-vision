@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { exportFrameSize, resolveFraming } from '../src/vision/videoGeometry.ts';
+import { exportFrameSize, fitAspectBox, getVideoGeometry, resolveFraming } from '../src/vision/videoGeometry.ts';
 
 describe('resolveFraming', () => {
   it('keeps an explicit fit or fill', () => {
@@ -41,5 +41,29 @@ describe('exportFrameSize', () => {
 
   it('exports 16:9 fit at 1920x1080', () => {
     assert.deepEqual(exportFrameSize(1920, 1080, 800, 600, 'fit'), { width: 1920, height: 1080 });
+  });
+
+  it('locks delivery sizes for the aspect presets', () => {
+    assert.deepEqual(exportFrameSize(1920, 1080, 800, 600, 'fill', 1920, '9:16'), { width: 1080, height: 1920 });
+    assert.deepEqual(exportFrameSize(1920, 1080, 800, 600, 'auto', 1920, '4:5'), { width: 1080, height: 1350 });
+    assert.deepEqual(exportFrameSize(640, 480, 800, 600, 'fit', 1920, '1:1'), { width: 1080, height: 1080 });
+    assert.deepEqual(exportFrameSize(1080, 1920, 400, 800, 'auto', 1920, '16:9'), { width: 1920, height: 1080 });
+  });
+});
+
+describe('letterbox', () => {
+  it('keeps a 16:9 picture inside a 9:16 plate with vertical bars', () => {
+    const geometry = getVideoGeometry(1920, 1080, 1080, 1920, 'fit');
+    assert.equal(geometry.offsetX, 0);
+    assert.ok(geometry.offsetY > 0);
+    assert.equal(geometry.sourceWidth * geometry.scale, 1080);
+    assert.ok(geometry.sourceHeight * geometry.scale < 1920);
+  });
+
+  it('fits a portrait preset inside a landscape stage', () => {
+    const box = fitAspectBox(1000, 500, '9:16');
+    assert.ok(box.height <= 500);
+    assert.ok(box.width < box.height);
+    assert.ok(Math.abs(box.width / box.height - 1080 / 1920) < 0.001);
   });
 });
