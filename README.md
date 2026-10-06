@@ -15,7 +15,7 @@ Armstrong Future Labs and Armstrong Studios. A browser instrument that reads a l
 - Queues up to 10 clips, scrubs the timeline, and renders the queue in order from the playhead.
 - Prefers brackets on a detected face, eyes or hands, and falls back to the usual field when nothing is found.
 - Offers a clean plate and a start / mid / end opacity envelope.
-- Exports a five-second composite. Pro encode writes H.264 at a chosen bitrate and can also save a silent master. If that path is unavailable, the browser recorder is used.
+- Exports the clip from the playhead through the end of the file. Pro encode writes H.264 at a chosen bitrate and can also save a silent master. If that path is unavailable, the browser recorder is used.
 
 The repository intentionally ships without a bundled video. Bring any local clip to start; this keeps the project lightweight and avoids redistributing third-party footage.
 
@@ -41,7 +41,7 @@ Do not open `index.html` directly. Vite needs to serve the application.
 1. Select **Upload video**, or drop up to 10 clips onto the stage.
 2. Choose a local MP4, WebM or MOV file.
 3. Pick an export size, scrub the timeline, and open **Tune** for the preset, motion density, subject lock and opacity envelope.
-4. Select **Export clip** or **Export queue**. Export starts at the playhead and records five seconds. **Clean plate** hides the overlay.
+4. Select **Export clip** or **Export queue**. Export starts at the playhead and runs through the end of that clip. **Clean plate** hides the overlay.
 
 The source video stays on your device. Uploaded files are represented by a temporary browser URL and are forgotten when the page is refreshed.
 
@@ -55,7 +55,7 @@ Only the selected visual configuration and preset are saved in local browser sto
 
 Pro encode uses WebCodecs H.264 and muxes a silent MP4 in the browser at the selected bitrate. Exact sizes are 1080×1920, 1080×1350, 1080×1080 and 1920×1080. Auto and Fit still export the full picture at the source aspect with a 1920 px long edge. Fill crops to the stage. A silent master is a second file with no overlay; the burn-in file keeps the marks and, on AFL Dark, the lockup.
 
-If H.264 is unavailable, export falls back to the browser's `MediaRecorder` and prefers MP4, then WebM. Each queued clip records five seconds from its playhead or stored in-point. A fresh recorder is created per clip.
+If H.264 is unavailable, export falls back to the browser's `MediaRecorder` and prefers MP4, then WebM. Each queued clip records from its playhead, or stored in-point, through the end of the file. A fresh recorder is created per clip.
 
 Current Chrome, Edge and Safari are recommended. Very large source files may be limited by available device memory.
 

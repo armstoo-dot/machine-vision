@@ -13,6 +13,7 @@
 - Face, eye and hand lock, with the previous field placement when detection finds nothing.
 - Clean plate and a start / mid / end opacity envelope.
 - Pro H.264 export with bitrate control, a silent master, and a fast recorder fallback. Playback pauses when the encoder falls behind so the file keeps the full window.
+- Export runs from the playhead through the end of the clip, instead of stopping at five seconds.
 
 ## 0.1.0 — 2026-08-28
 

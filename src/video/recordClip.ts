@@ -4,7 +4,8 @@ import type { FrameOverlay, VisionConfig } from '../vision/types';
 import { exportFrameSize } from '../vision/videoGeometry';
 
 export const EXPORT_FPS = 30;
-export const EXPORT_DURATION_SEC = 5;
+/** Used only when the browser has not reported a duration yet. */
+const FALLBACK_EXPORT_SEC = 5;
 
 export class ExportCancelled extends Error {
   constructor() {
@@ -41,10 +42,10 @@ function assertActive(isCancelled: () => boolean) {
 function clipWindow(video: HTMLVideoElement, startTime: number) {
   const duration = Number.isFinite(video.duration) ? video.duration : 0;
   let start = Math.max(0, startTime);
-  if (duration > 0.5 && duration - start < 0.35) start = Math.max(0, duration - EXPORT_DURATION_SEC);
+  if (duration > 0.5 && duration - start < 0.35) start = 0;
   const seconds = duration > 0
-    ? Math.min(EXPORT_DURATION_SEC, Math.max(0.35, duration - start))
-    : EXPORT_DURATION_SEC;
+    ? Math.max(0.35, duration - start)
+    : FALLBACK_EXPORT_SEC;
   return { start, seconds };
 }
 
@@ -143,7 +144,7 @@ async function encodePro(options: RecordClipOptions, canvas: HTMLCanvasElement, 
     let encoded = 0;
     const end = start + seconds;
     const lead = 2 / EXPORT_FPS;
-    const deadline = performance.now() + (seconds + 12) * 1000;
+    const deadline = performance.now() + Math.max(20, seconds * 2 + 8) * 1000;
     await new Promise<void>((resolve, reject) => {
       const step = () => {
         if (isCancelled()) {
