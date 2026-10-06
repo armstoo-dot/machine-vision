@@ -1,4 +1,5 @@
-import type { FeatureMap, FeaturePoint, VisionConfig } from './types';
+import { motionThreshold, motionWeightedScore } from './motionDensity';
+import type { FeatureMap, FeaturePoint, RasterData, VisionConfig } from './types';
 
 const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
 
@@ -8,7 +9,7 @@ export interface AnalysisResult {
 }
 
 export function analyzeFrame(
-  image: ImageData,
+  image: RasterData,
   config: VisionConfig,
   previousLuma?: Float32Array,
 ): AnalysisResult {
@@ -65,13 +66,19 @@ export function analyzeFrame(
         case 'bright': score = bright * 0.72 + edge * 0.28; break;
         case 'dark': score = dark * 0.72 + edge * 0.28; break;
         case 'motion': score = motion * 0.78 + edge * 0.22; break;
-        default: {
+        case 'combined': {
           const motionWeight = 0.04 + (config.motionBias / 100) * 0.22;
           score = contrast * 0.48 + edge * (0.48 - motionWeight) + motion * motionWeight;
+          break;
+        }
+        default: {
+          const unreachable: never = config.mode;
+          score = unreachable;
         }
       }
 
-      if (score >= threshold) {
+      score = motionWeightedScore(score, motion, config.motionDensity);
+      if (score >= motionThreshold(threshold, motion, config.motionDensity)) {
         candidates.push({ x: cx / width, y: cy / height, score: clamp01(score), ...signals });
       }
     }
