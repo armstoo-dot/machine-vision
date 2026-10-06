@@ -24,6 +24,7 @@ export interface VisionConfig {
   pointSize: number;
   labelSize: number;
   contrastAssist: boolean;
+  underlay: boolean;
   analysisFPS: number;
   seed: number;
   boxesEnabled: boolean;

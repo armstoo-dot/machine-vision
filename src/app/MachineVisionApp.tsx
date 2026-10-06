@@ -3,13 +3,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { VisionControls } from '../controls/VisionControls';
 import { VideoStage, type ExportStatus } from '../video/VideoStage';
-import { EDITORIAL_CONFIG, sanitizeConfig, STORAGE_KEY } from '../vision/config';
+import { AFL_CONFIG, sanitizeConfig, STORAGE_KEY } from '../vision/config';
 import { PRESETS, randomizeLook, type PresetName } from '../vision/presets';
 import type { VisionConfig } from '../vision/types';
 
 export function MachineVisionApp() {
-  const [config, setConfig] = useState<VisionConfig>(EDITORIAL_CONFIG);
-  const [preset, setPreset] = useState<PresetName | 'Custom'>('Editorial');
+  const [config, setConfig] = useState<VisionConfig>(AFL_CONFIG);
+  const [preset, setPreset] = useState<PresetName | 'Custom'>('AFL');
   const [tuneOpen, setTuneOpen] = useState(false);
   const [layerActive, setLayerActive] = useState(true);
   const [storageReady, setStorageReady] = useState(false);
@@ -30,7 +30,7 @@ export function MachineVisionApp() {
         setConfig(sanitizeConfig(parsed.config));
         if (parsed.preset) setPreset(parsed.preset);
       }
-    } catch { /* Invalid local state falls back to Editorial. */ }
+    } catch { /* Invalid local state falls back to the AFL preset. */ }
     setStorageReady(true);
   }, []);
 
@@ -70,8 +70,8 @@ export function MachineVisionApp() {
   };
 
   const resetAll = () => {
-    setConfig({ ...EDITORIAL_CONFIG });
-    setPreset('Editorial');
+    setConfig({ ...AFL_CONFIG });
+    setPreset('AFL');
   };
 
   const selectVideo = (file?: File) => {
@@ -92,14 +92,15 @@ export function MachineVisionApp() {
 
   return (
     <main className="machine-app">
+      <header className="afl-header">
+        <p className="afl-mark">&gt;&gt; Armstrong Future Labs</p>
+        <p className="afl-studio">Armstrong Studios</p>
+      </header>
+      <div className="workspace">
       <section className="identity-panel">
-        <div className="identity-topline">
-          <a href="https://amirmushich.com" target="_blank" rel="noreferrer">A tool by Amir Mushich</a>
-          <a href="https://github.com/amirmushichge/machine-vision" target="_blank" rel="noreferrer">View source ↗</a>
-        </div>
         <div className="identity-copy">
-          <h1><span>Machine</span><span>Vision<sup>®</sup></span></h1>
-          <p>Video interpreted as a changing field of points, signals and selective focus.</p>
+          <h1><span>Machine Vision</span><span>AFL Lab</span></h1>
+          <p>Video read as points, signals and selective focus.</p>
         </div>
         <div className="public-actions">
           <input
@@ -134,7 +135,7 @@ export function MachineVisionApp() {
         {(uploadError || exportStatus.status === 'error') && <p className="upload-error" role="alert">{uploadError || exportStatus.message}</p>}
       </section>
 
-      <section className="stage-shell" aria-label="Machine Vision live canvas">
+      <section className="stage-shell" aria-label="Live canvas">
         <VideoStage
           config={config}
           layerActive={layerActive}
@@ -145,6 +146,11 @@ export function MachineVisionApp() {
           onReadyChange={setVideoReady}
         />
       </section>
+      </div>
+      <footer className="afl-footer">
+        <p>Human taste. AI workflows.</p>
+        <span aria-hidden="true">&gt;&gt;</span>
+      </footer>
 
       {tuneOpen && <button className="sheet-scrim" type="button" onClick={() => setTuneOpen(false)} aria-label="Close controls" />}
       <aside className={`tune-surface${tuneOpen ? ' is-open' : ''}`} aria-hidden={!tuneOpen}>

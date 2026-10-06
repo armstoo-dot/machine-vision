@@ -7,7 +7,7 @@ import { generateFrameOverlay } from '../vision/overlayGenerator';
 import { renderOverlay } from '../vision/overlayRenderer';
 import { hashSeed } from '../vision/seededRandom';
 import type { FrameOverlay, VisionConfig } from '../vision/types';
-import { getVideoGeometry, resolveFraming, type ResolvedFraming } from '../vision/videoGeometry';
+import { exportFrameSize, getVideoGeometry, resolveFraming, type ResolvedFraming } from '../vision/videoGeometry';
 
 interface VideoStageProps {
   config: VisionConfig;
@@ -27,7 +27,6 @@ export interface ExportStatus {
 
 const EXPORT_DURATION_MS = 5000;
 const EXPORT_FPS = 30;
-const EXPORT_LONG_EDGE = 1920;
 
 function imageFilter(mode: VisionConfig['imageMode']) {
   if (mode === 'mono') return 'grayscale(1) contrast(1.08)';
@@ -67,7 +66,7 @@ export function VideoStage({ config, layerActive, source, exportName, exportRequ
   const [paused, setPaused] = useState(false);
   const [ready, setReady] = useState(false);
   const [loadError, setLoadError] = useState('');
-  const [resolvedFraming, setResolvedFraming] = useState<ResolvedFraming>('fill');
+  const [resolvedFraming, setResolvedFraming] = useState<ResolvedFraming>('fit');
 
   useEffect(() => {
     configRef.current = config;
@@ -177,15 +176,13 @@ export function VideoStage({ config, layerActive, source, exportName, exportRequ
       }
 
       const rect = stage.getBoundingClientRect();
-      const aspect = Math.max(0.2, rect.width / Math.max(1, rect.height));
-      let width = aspect >= 1 ? EXPORT_LONG_EDGE : Math.round(EXPORT_LONG_EDGE * aspect);
-      let height = aspect >= 1 ? Math.round(EXPORT_LONG_EDGE / aspect) : EXPORT_LONG_EDGE;
-      width -= width % 2;
-      height -= height % 2;
+      const sourceWidth = video.videoWidth || 16;
+      const sourceHeight = video.videoHeight || 9;
+      const frame = exportFrameSize(sourceWidth, sourceHeight, rect.width, rect.height, configRef.current.framing);
 
       const exportCanvas = document.createElement('canvas');
-      exportCanvas.width = Math.max(2, width);
-      exportCanvas.height = Math.max(2, height);
+      exportCanvas.width = frame.width;
+      exportCanvas.height = frame.height;
       const exportContext = exportCanvas.getContext('2d', { alpha: false });
       if (!exportContext) throw new Error('Could not create the export canvas.');
 
@@ -210,16 +207,34 @@ export function VideoStage({ config, layerActive, source, exportName, exportRequ
       if (cancelled) return;
 
       const geometry = getVideoGeometry(
-        video.videoWidth || 16,
-        video.videoHeight || 9,
+        sourceWidth,
+        sourceHeight,
         exportCanvas.width,
         exportCanvas.height,
         configRef.current.framing,
       );
+      const previewGeometry = getVideoGeometry(
+        sourceWidth,
+        sourceHeight,
+        rect.width,
+        rect.height,
+        configRef.current.framing,
+      );
+      const sizeScale = Math.min(6, Math.max(0.5, geometry.scale / Math.max(0.001, previewGeometry.scale)));
+      const exportOverlay = document.createElement('canvas');
       const drawFrame = () => {
         const current = configRef.current;
+        renderOverlay(exportOverlay, layerRef.current ? overlayDataRef.current : null, current, {
+          sourceWidth,
+          sourceHeight,
+          stageWidth: exportCanvas.width,
+          stageHeight: exportCanvas.height,
+          transitionAlpha: 1,
+          pixelRatio: 1,
+          sizeScale,
+        });
         exportContext.save();
-        exportContext.fillStyle = '#111';
+        exportContext.fillStyle = '#080808';
         exportContext.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
         exportContext.filter = imageFilter(current.imageMode);
         exportContext.drawImage(
@@ -230,7 +245,7 @@ export function VideoStage({ config, layerActive, source, exportName, exportRequ
           geometry.sourceHeight * geometry.scale,
         );
         exportContext.restore();
-        exportContext.drawImage(overlay, 0, 0, overlay.width, overlay.height, 0, 0, exportCanvas.width, exportCanvas.height);
+        exportContext.drawImage(exportOverlay, 0, 0);
       };
 
       drawFrame();
@@ -272,7 +287,7 @@ export function VideoStage({ config, layerActive, source, exportName, exportRequ
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement('a');
       anchor.href = url;
-      anchor.download = `machine-vision-${safeExportName(exportName)}.${format.extension}`;
+      anchor.download = `afl-lab-${safeExportName(exportName)}.${format.extension}`;
       anchor.click();
       window.setTimeout(() => URL.revokeObjectURL(url), 2000);
       onExportStatus({ status: 'done', progress: 100 });
@@ -326,7 +341,7 @@ export function VideoStage({ config, layerActive, source, exportName, exportRequ
         {paused ? 'Play' : 'Pause'}
       </button>
       {!ready && <div className={`video-loading${loadError ? ' is-error' : ''}`}>{source ? loadError || 'Loading source' : 'Upload a video to begin'}</div>}
-      <div className="stage-index" aria-hidden="true">MV / 001</div>
+      <div className="stage-index" aria-hidden="true">AFL / 001</div>
     </div>
   );
 }
