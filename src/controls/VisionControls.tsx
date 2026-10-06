@@ -42,7 +42,7 @@ export function VisionControls({ config, preset, onChange, onPreset, onRandomize
   return (
     <div className="controls-panel">
       <div className="controls-header">
-        <div><span className="eyebrow">Tune mode</span><h2>Visual system</h2></div>
+        <div><span className="eyebrow">AFL Lab / Tune</span><h2>Visual system</h2></div>
         <button type="button" className="close-button" onClick={onClose} aria-label="Close controls">Close</button>
       </div>
 
@@ -90,7 +90,7 @@ export function VisionControls({ config, preset, onChange, onPreset, onRandomize
         <summary><span>Frame &amp; color</span><span className="section-meta"><span className="section-number">03</span><span className="section-toggle" aria-hidden="true" /></span></summary>
         <div className="control-group">
           <div className="choice-control">
-            <div className="choice-heading"><span>Framing</span><small>Auto avoids severe orientation crops</small></div>
+            <div className="choice-heading"><span>Framing</span><small>Auto keeps the full frame when a fill would crop it</small></div>
             <div className="framing-grid" role="group" aria-label="Video framing">
               {framingModes.map(({ value, label }) => <button type="button" key={value} className={config.framing === value ? 'is-active' : ''} onClick={() => onChange('framing', value)}>{label}</button>)}
             </div>
@@ -132,6 +132,7 @@ export function VisionControls({ config, preset, onChange, onPreset, onRandomize
           <ControlSlider label="Point size" value={config.pointSize} min={1} max={5} step={0.1} onChange={(value) => onChange('pointSize', value)} />
           <ControlSlider label="Label size" value={config.labelSize} min={7} max={14} suffix=" px" onChange={(value) => onChange('labelSize', value)} />
           <Switch label="Contrast assist" checked={config.contrastAssist} onChange={(value) => onChange('contrastAssist', value)} />
+          <Switch label="Soft underlay" checked={config.underlay} onChange={(value) => onChange('underlay', value)} />
           <Switch label="Boxes" checked={config.boxesEnabled} onChange={(value) => onChange('boxesEnabled', value)} />
         </div>
       </details>

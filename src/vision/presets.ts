@@ -1,13 +1,14 @@
-import { EDITORIAL_CONFIG } from './config';
+import { AFL_CONFIG, EDITORIAL_CONFIG } from './config';
 import type { VisionConfig } from './types';
 
-export type PresetName = 'Editorial' | 'Dense' | 'Sparse' | 'Signal';
+export type PresetName = 'AFL' | 'Editorial' | 'Dense' | 'Sparse' | 'Signal';
 
 export const PRESETS: Record<PresetName, VisionConfig> = {
+  AFL: { ...AFL_CONFIG },
   Editorial: { ...EDITORIAL_CONFIG },
-  Dense: { ...EDITORIAL_CONFIG, threshold: 38, maxPoints: 74, minDistance: 28, density: 72, connectionAmount: 42, labelAmount: 34, bracketAmount: 35 },
-  Sparse: { ...EDITORIAL_CONFIG, threshold: 57, maxPoints: 28, minDistance: 58, density: 34, connectionAmount: 14, labelAmount: 12, bracketAmount: 12 },
-  Signal: { ...EDITORIAL_CONFIG, mode: 'edges', threshold: 42, density: 58, chaos: 48, connectionAmount: 19, labelAmount: 38, bracketAmount: 30, pointSize: 1.6 },
+  Dense: { ...AFL_CONFIG, threshold: 38, maxPoints: 74, minDistance: 28, density: 72, connectionAmount: 42, labelAmount: 34, bracketAmount: 35 },
+  Sparse: { ...AFL_CONFIG, threshold: 57, maxPoints: 28, minDistance: 58, density: 34, connectionAmount: 14, labelAmount: 12, bracketAmount: 12 },
+  Signal: { ...AFL_CONFIG, mode: 'edges', threshold: 42, density: 58, chaos: 48, connectionAmount: 19, labelAmount: 38, bracketAmount: 30, pointSize: 1.6 },
 };
 
 function differentInteger(min: number, max: number, current: number) {
@@ -51,6 +52,7 @@ export function randomizeLook(config: VisionConfig): VisionConfig {
     pointSize: differentStep(1, 5, 0.1, config.pointSize),
     labelSize: differentInteger(7, 14, config.labelSize),
     contrastAssist: !config.contrastAssist,
+    underlay: !config.underlay,
     analysisFPS: differentInteger(2, 15, config.analysisFPS),
     seed: differentInteger(1, 999999, config.seed),
     boxesEnabled: !config.boxesEnabled,
