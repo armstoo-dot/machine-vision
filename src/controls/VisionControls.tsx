@@ -1,7 +1,8 @@
 import { ControlSlider } from './ControlSlider';
 import type { PresetName } from '../vision/presets';
 import { PRESETS } from '../vision/presets';
-import type { AnalysisMode, FramingMode, ImageMode, VisionConfig } from '../vision/types';
+import type { AnalysisMode, ExportAspect, FramingMode, ImageMode, VisionConfig } from '../vision/types';
+import { EXPORT_ASPECTS } from '../vision/videoGeometry';
 
 interface VisionControlsProps {
   config: VisionConfig;
@@ -38,6 +39,14 @@ const imageModes: { value: ImageMode; label: string }[] = [
   { value: 'invert', label: 'Invert' }, { value: 'contrast', label: 'High contrast' },
 ];
 
+const exportAspects: { value: ExportAspect; label: string }[] = [
+  { value: 'auto', label: 'Auto' },
+  { value: '9:16', label: '9:16' },
+  { value: '4:5', label: '4:5' },
+  { value: '1:1', label: '1:1' },
+  { value: '16:9', label: '16:9' },
+];
+
 export function VisionControls({ config, preset, onChange, onPreset, onRandomize, onReset, onClose }: VisionControlsProps) {
   return (
     <div className="controls-panel">
@@ -70,6 +79,7 @@ export function VisionControls({ config, preset, onChange, onPreset, onRandomize
           <ControlSlider label="Max points" value={config.maxPoints} min={8} max={100} onChange={(value) => onChange('maxPoints', value)} />
           <ControlSlider label="Min distance" value={config.minDistance} min={12} max={90} onChange={(value) => onChange('minDistance', value)} />
           <ControlSlider label="Motion bias" value={config.motionBias} min={0} max={100} disabled={config.mode !== 'combined'} onChange={(value) => onChange('motionBias', value)} />
+          <ControlSlider label="Motion density" value={config.motionDensity} min={0} max={100} title="More marks where the frame is moving. Static background stays quieter." onChange={(value) => onChange('motionDensity', value)} />
         </div>
       </details>
 
@@ -89,6 +99,17 @@ export function VisionControls({ config, preset, onChange, onPreset, onRandomize
       <details open>
         <summary><span>Frame &amp; color</span><span className="section-meta"><span className="section-number">03</span><span className="section-toggle" aria-hidden="true" /></span></summary>
         <div className="control-group">
+          <div className="choice-control">
+            <div className="choice-heading">
+              <span>Export size</span>
+              <small>{config.exportAspect === 'auto' ? 'Source aspect, full picture' : `${EXPORT_ASPECTS[config.exportAspect].width}×${EXPORT_ASPECTS[config.exportAspect].height}`}</small>
+            </div>
+            <div className="aspect-grid" role="group" aria-label="Export size">
+              {exportAspects.map(({ value, label }) => (
+                <button type="button" key={value} className={config.exportAspect === value ? 'is-active' : ''} onClick={() => onChange('exportAspect', value)}>{label}</button>
+              ))}
+            </div>
+          </div>
           <div className="choice-control">
             <div className="choice-heading"><span>Framing</span><small>Auto keeps the full frame when a fill would crop it</small></div>
             <div className="framing-grid" role="group" aria-label="Video framing">
@@ -127,7 +148,11 @@ export function VisionControls({ config, preset, onChange, onPreset, onRandomize
       <details>
         <summary><span>Appearance</span><span className="section-meta"><span className="section-number">04</span><span className="section-toggle" aria-hidden="true" /></span></summary>
         <div className="control-group">
-          <ControlSlider label="Overlay opacity" value={config.overlayOpacity} min={20} max={100} suffix="%" onChange={(value) => onChange('overlayOpacity', value)} />
+          <ControlSlider label="Overlay opacity" value={config.overlayOpacity} min={0} max={100} suffix="%" onChange={(value) => onChange('overlayOpacity', value)} />
+          <Switch label="Opacity envelope" checked={config.envelopeEnabled} onChange={(value) => onChange('envelopeEnabled', value)} />
+          <ControlSlider label="Envelope start" value={config.opacityStart} min={0} max={100} suffix="%" disabled={!config.envelopeEnabled} onChange={(value) => onChange('opacityStart', value)} />
+          <ControlSlider label="Envelope mid" value={config.opacityMid} min={0} max={100} suffix="%" disabled={!config.envelopeEnabled} onChange={(value) => onChange('opacityMid', value)} />
+          <ControlSlider label="Envelope end" value={config.opacityEnd} min={0} max={100} suffix="%" disabled={!config.envelopeEnabled} onChange={(value) => onChange('opacityEnd', value)} />
           <ControlSlider label="Line weight" value={config.lineWeight} min={0.5} max={2} step={0.1} suffix=" px" onChange={(value) => onChange('lineWeight', value)} />
           <ControlSlider label="Point size" value={config.pointSize} min={1} max={5} step={0.1} onChange={(value) => onChange('pointSize', value)} />
           <ControlSlider label="Label size" value={config.labelSize} min={7} max={14} suffix=" px" onChange={(value) => onChange('labelSize', value)} />
@@ -149,13 +174,24 @@ export function VisionControls({ config, preset, onChange, onPreset, onRandomize
       <details>
         <summary><span>Tracking boxes</span><span className="section-meta"><span className="section-number">06</span><span className="section-toggle" aria-hidden="true" /></span></summary>
         <div className="control-group">
+          <Switch label="Subject lock" checked={config.subjectLock} onChange={(value) => onChange('subjectLock', value)} />
           <ControlSlider label="Box count" value={config.boxCount} min={0} max={4} disabled={!config.boxesEnabled} onChange={(value) => onChange('boxCount', value)} />
           <ControlSlider label="Hold" value={config.boxHold} min={200} max={2200} step={50} suffix=" ms" disabled={!config.boxesEnabled} onChange={(value) => onChange('boxHold', value)} />
           <ControlSlider label="Smoothness" value={config.boxSmoothness} min={0} max={100} disabled={!config.boxesEnabled} onChange={(value) => onChange('boxSmoothness', value)} />
           <ControlSlider label="Box strength" value={config.boxStrength} min={10} max={100} disabled={!config.boxesEnabled} onChange={(value) => onChange('boxStrength', value)} />
         </div>
       </details>
-      <p className="controls-footnote">Video, frames and exports stay on this device. Nothing is uploaded or stored.</p>
+
+      <details>
+        <summary><span>Export</span><span className="section-meta"><span className="section-number">07</span><span className="section-toggle" aria-hidden="true" /></span></summary>
+        <div className="control-group">
+          <Switch label="Pro encode" checked={config.proExport} onChange={(value) => onChange('proExport', value)} />
+          <ControlSlider label="Bitrate" value={config.exportBitrate} min={4} max={24} suffix=" Mbps" onChange={(value) => onChange('exportBitrate', value)} />
+          <Switch label="Silent master" checked={config.silentMaster} onChange={(value) => onChange('silentMaster', value)} />
+          <Switch label="Lockup burn-in" checked={config.burnLockup} onChange={(value) => onChange('burnLockup', value)} />
+        </div>
+      </details>
+      <p className="controls-footnote">Video, frames and exports stay on this device. Pro encode writes H.264 locally and falls back to the browser recorder if it cannot.</p>
     </div>
   );
 }

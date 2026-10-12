@@ -1,4 +1,4 @@
-import type { FramingMode } from './types';
+import type { ExportAspect, FramingMode } from './types';
 
 export interface VideoGeometry {
   scale: number;
@@ -16,6 +16,34 @@ export type ResolvedFraming = 'fit' | 'fill';
 export const AUTO_FILL_CROP_LIMIT = 0.12;
 
 export const EXPORT_LONG_EDGE = 1920;
+
+export const EXPORT_ASPECTS = {
+  '9:16': { width: 1080, height: 1920 },
+  '4:5': { width: 1080, height: 1350 },
+  '1:1': { width: 1080, height: 1080 },
+  '16:9': { width: 1920, height: 1080 },
+} as const;
+
+export function aspectRatio(aspect: ExportAspect) {
+  if (aspect === 'auto') return null;
+  const frame = EXPORT_ASPECTS[aspect];
+  return frame.width / frame.height;
+}
+
+/** Fit a locked aspect inside a stage. Auto uses the stage itself. */
+export function fitAspectBox(boundsWidth: number, boundsHeight: number, aspect: ExportAspect) {
+  const ratio = aspectRatio(aspect);
+  const safeWidth = Math.max(1, boundsWidth);
+  const safeHeight = Math.max(1, boundsHeight);
+  if (!ratio) return { width: safeWidth, height: safeHeight };
+  let width = safeWidth;
+  let height = width / ratio;
+  if (height > safeHeight) {
+    height = safeHeight;
+    width = height * ratio;
+  }
+  return { width, height };
+}
 
 export function fillCrop(
   sourceWidth: number,
@@ -88,7 +116,10 @@ function even(value: number) {
   return rounded - (rounded % 2);
 }
 
-/** Fit exports the full source frame. Fill exports the stage crop. Long edge is 1920. */
+/**
+ * Locked aspects export at an exact delivery size and letterbox the source.
+ * Auto/Fit keep the full picture at the source aspect. Fill exports the stage crop.
+ */
 export function exportFrameSize(
   sourceWidth: number,
   sourceHeight: number,
@@ -96,7 +127,9 @@ export function exportFrameSize(
   stageHeight: number,
   framing: FramingMode,
   longEdge = EXPORT_LONG_EDGE,
+  exportAspect: ExportAspect = 'auto',
 ) {
+  if (exportAspect !== 'auto') return { ...EXPORT_ASPECTS[exportAspect] };
   const safeSourceWidth = Math.max(1, sourceWidth);
   const safeSourceHeight = Math.max(1, sourceHeight);
   const safeStageWidth = Math.max(1, stageWidth);

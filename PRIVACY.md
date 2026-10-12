@@ -6,7 +6,7 @@ MACHINE VISION / AFL LAB is a local-only video processing tool from Armstrong Fu
 
 - A selected video is opened through a temporary browser `blob:` URL.
 - Frames are analysed with browser canvas APIs in device memory.
-- Composite exports are recorded in the browser and downloaded directly to the device.
+- Composite exports are encoded in the browser, either with WebCodecs or the browser recorder, and downloaded directly to the device.
 - There is no upload endpoint, application server, database or cloud media storage.
 - Temporary object URLs are revoked when a video is replaced or the app is closed, and disappear when the page is refreshed.
 

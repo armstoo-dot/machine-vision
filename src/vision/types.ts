@@ -1,9 +1,12 @@
 export type AnalysisMode = 'combined' | 'contrast' | 'edges' | 'bright' | 'dark' | 'motion';
 export type FramingMode = 'auto' | 'fit' | 'fill';
 export type ImageMode = 'original' | 'mono' | 'invert' | 'contrast';
+export type ExportAspect = 'auto' | '9:16' | '4:5' | '1:1' | '16:9';
+export type LabelVoice = 'editorial' | 'quiet' | 'hud';
 
 export interface VisionConfig {
   framing: FramingMode;
+  exportAspect: ExportAspect;
   overlayColor: string;
   imageMode: ImageMode;
   mode: AnalysisMode;
@@ -12,6 +15,7 @@ export interface VisionConfig {
   maxPoints: number;
   minDistance: number;
   motionBias: number;
+  motionDensity: number;
   density: number;
   chaos: number;
   connectionsEnabled: boolean;
@@ -32,6 +36,22 @@ export interface VisionConfig {
   boxHold: number;
   boxSmoothness: number;
   boxStrength: number;
+  subjectLock: boolean;
+  labelVoice: LabelVoice;
+  burnLockup: boolean;
+  envelopeEnabled: boolean;
+  opacityStart: number;
+  opacityMid: number;
+  opacityEnd: number;
+  proExport: boolean;
+  exportBitrate: number;
+  silentMaster: boolean;
+}
+
+export interface RasterData {
+  width: number;
+  height: number;
+  data: Uint8ClampedArray;
 }
 
 export interface FeaturePoint {
@@ -81,6 +101,18 @@ export interface OverlayBracket {
   size: number;
 }
 
+export type SubjectKind = 'face' | 'eye' | 'hand' | 'subject';
+
+export interface SubjectMark {
+  kind: SubjectKind;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  score: number;
+  label: string;
+}
+
 export interface PersistentBoxRenderData {
   id: number;
   x: number;
@@ -98,6 +130,14 @@ export interface FrameOverlay {
   labels: OverlayLabel[];
   brackets: OverlayBracket[];
   boxes: PersistentBoxRenderData[];
+  subjects: SubjectMark[];
   featureCount: number;
   frameBucket: number;
+}
+
+export interface FaceHint {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
 }
