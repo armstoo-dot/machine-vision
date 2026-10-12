@@ -2,13 +2,12 @@
   "name": "machine-vision",
   "version": "0.1.0",
   "private": true,
-  "description": "A browser-based visual instrument that turns local video analysis into procedural machine-vision graphics.",
-  "author": "Amir Mushich",
+  "description": "Armstrong Future Labs instrument. Local video read as procedural machine-vision graphics.",
+  "author": "Armstrong Future Labs",
   "license": "MIT",
-  "homepage": "https://amirmushich.com/lab",
   "repository": {
     "type": "git",
-    "url": "https://github.com/amirmushichge/machine-vision.git"
+    "url": "https://github.com/armstoo-dot/machine-vision.git"
   },
   "keywords": [
     "creative-coding",
@@ -23,9 +22,14 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node --experimental-strip-types --test tests/videoGeometry.test.ts"
   },
   "dependencies": {
+    "@fontsource/barlow-condensed": "^5.3.0",
+    "@fontsource/ibm-plex-mono": "^5.3.0",
+    "@fontsource/michroma": "^5.3.0",
+    "@fontsource/space-grotesk": "^5.3.0",
     "react": "19.2.6",
     "react-dom": "19.2.6"
   },
