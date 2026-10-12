@@ -1,4 +1,5 @@
 import { DEBUG_VISION } from './config';
+import { drawAflLockup } from './lockup';
 import { getVideoGeometry, mapVideoLength, mapVideoPoint } from './videoGeometry';
 import type { FrameOverlay, VisionConfig } from './types';
 
@@ -8,6 +9,8 @@ interface RenderOptions {
   stageWidth: number;
   stageHeight: number;
   transitionAlpha: number;
+  /** Resolved 0–1 opacity, including the envelope. Falls back to the config slider. */
+  opacity?: number;
   pixelRatio?: number;
   sizeScale?: number;
 }
@@ -20,6 +23,22 @@ function inStage(x: number, y: number, width: number, height: number) {
 
 function lineAlpha(config: VisionConfig, alpha: number) {
   return config.underlay ? Math.max(alpha, 0.82) : alpha;
+}
+
+function strokeGlyph(
+  context: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  color: string,
+  lineWidth: number,
+  alpha: number,
+) {
+  context.lineWidth = lineWidth;
+  context.strokeStyle = color;
+  context.lineJoin = 'round';
+  context.globalAlpha = alpha;
+  context.strokeText(text, x, y);
 }
 
 function fillPlate(
@@ -45,7 +64,6 @@ function drawLabel(
   config: VisionConfig,
   masterAlpha: number,
   sizeScale: number,
-  assistColor: string,
 ) {
   const fontSize = config.labelSize * sizeScale;
   context.font = `500 ${fontSize}px ${LABEL_FONT}`;
@@ -59,14 +77,11 @@ function drawLabel(
     context.globalAlpha = masterAlpha * 0.82;
     context.fillStyle = 'rgba(8,8,8,0.9)';
     fillPlate(context, left, y - fontSize / 2 - padY, width + padX * 2, fontSize + padY * 2, 2 * sizeScale);
-  } else if (config.contrastAssist) {
-    context.lineWidth = 3.2 * sizeScale;
-    context.strokeStyle = assistColor;
-    context.lineJoin = 'round';
-    context.globalAlpha = masterAlpha * 0.7;
-    context.strokeText(text, x, y);
   }
-  context.globalAlpha = masterAlpha * 0.96;
+  const halo = (config.contrastAssist ? 3.6 : 2.6) * sizeScale;
+  strokeGlyph(context, text, x, y, '#080808', halo, masterAlpha * 0.96);
+  strokeGlyph(context, text, x, y, '#f7f8f3', Math.max(1.2, halo * 0.38) * (config.underlay ? 0.7 : 1), masterAlpha * 0.9);
+  context.globalAlpha = masterAlpha * 0.98;
   context.fillStyle = config.overlayColor;
   context.fillText(text, x, y);
 }
@@ -94,7 +109,7 @@ export function renderOverlay(
   const geometry = getVideoGeometry(
     options.sourceWidth, options.sourceHeight, options.stageWidth, options.stageHeight, config.framing,
   );
-  const masterAlpha = (config.overlayOpacity / 100) * options.transitionAlpha;
+  const masterAlpha = (options.opacity ?? config.overlayOpacity / 100) * options.transitionAlpha;
   context.lineCap = 'square';
   context.lineJoin = 'miter';
   context.shadowColor = 'transparent';
@@ -173,29 +188,54 @@ export function renderOverlay(
       context.lineTo(topLeft.x + width + 13 * sizeScale, topLeft.y + lead);
       context.stroke();
     }
+
+    for (const subject of overlay.subjects) {
+      const topLeft = mapVideoPoint(subject.x, subject.y, geometry);
+      const bottomRight = mapVideoPoint(subject.x + subject.width, subject.y + subject.height, geometry);
+      const width = bottomRight.x - topLeft.x;
+      const height = bottomRight.y - topLeft.y;
+      if (width <= 2 || height <= 2) continue;
+      const corner = Math.min(subject.kind === 'eye' ? 8 * sizeScale : 16 * sizeScale, width * 0.28, height * 0.28);
+      context.globalAlpha = masterAlpha * alphaMultiplier * (subject.kind === 'face' ? 1 : 0.9);
+      context.beginPath();
+      context.moveTo(topLeft.x, topLeft.y + corner); context.lineTo(topLeft.x, topLeft.y); context.lineTo(topLeft.x + corner, topLeft.y);
+      context.moveTo(topLeft.x + width - corner, topLeft.y); context.lineTo(topLeft.x + width, topLeft.y); context.lineTo(topLeft.x + width, topLeft.y + corner);
+      context.moveTo(topLeft.x + width, topLeft.y + height - corner); context.lineTo(topLeft.x + width, topLeft.y + height); context.lineTo(topLeft.x + width - corner, topLeft.y + height);
+      context.moveTo(topLeft.x + corner, topLeft.y + height); context.lineTo(topLeft.x, topLeft.y + height); context.lineTo(topLeft.x, topLeft.y + height - corner);
+      context.stroke();
+    }
   };
 
-  const red = Number.parseInt(config.overlayColor.slice(1, 3), 16);
-  const green = Number.parseInt(config.overlayColor.slice(3, 5), 16);
-  const blue = Number.parseInt(config.overlayColor.slice(5, 7), 16);
-  const colorLuma = (red * 0.299 + green * 0.587 + blue * 0.114) / 255;
-  const assistColor = colorLuma > 0.55 ? 'rgba(0,0,0,0.92)' : 'rgba(255,255,255,0.9)';
-
+  const haloBoost = config.contrastAssist ? 1 : 0.72;
   if (config.underlay) {
     context.shadowColor = 'rgba(0,0,0,0.72)';
-    context.shadowBlur = 5 * sizeScale;
-    drawGeometry('#080808', config.lineWeight + 2.6, 0.92);
+    context.shadowBlur = 6 * sizeScale;
+    drawGeometry('#080808', config.lineWeight + 3.4 * haloBoost, 0.94);
     context.shadowColor = 'transparent';
     context.shadowBlur = 0;
-  } else if (config.contrastAssist) {
-    drawGeometry(assistColor, config.lineWeight + 2.2, 0.55);
   }
+  drawGeometry('#080808', config.lineWeight + 3.1 * haloBoost, 0.92);
+  drawGeometry('#f7f8f3', config.lineWeight + 1.15 * haloBoost, 0.88);
   drawGeometry(config.overlayColor, config.lineWeight, 1);
 
   for (const label of overlay.labels) {
     const point = mapVideoPoint(label.x, label.y, geometry);
     if (!inStage(point.x, point.y, options.stageWidth, options.stageHeight)) continue;
-    drawLabel(context, label.text, point.x, point.y, label.align, config, masterAlpha, sizeScale, assistColor);
+    drawLabel(context, label.text, point.x, point.y, label.align, config, masterAlpha, sizeScale);
+  }
+
+  for (const subject of overlay.subjects) {
+    const point = mapVideoPoint(subject.x, subject.y, geometry);
+    drawLabel(
+      context,
+      subject.label,
+      point.x + 4 * sizeScale,
+      point.y - 8 * sizeScale,
+      'left',
+      { ...config, labelSize: Math.max(8, config.labelSize - (subject.kind === 'eye' ? 2 : 0)) },
+      masterAlpha * Math.max(0.82, subject.score),
+      sizeScale,
+    );
   }
 
   for (const box of overlay.boxes) {
@@ -210,9 +250,10 @@ export function renderOverlay(
       { ...config, labelSize: Math.max(8, config.labelSize - 1) },
       boxAlpha,
       sizeScale,
-      assistColor,
     );
   }
+
+  if (config.burnLockup) drawAflLockup(context, options.stageWidth, options.stageHeight);
 
   if (DEBUG_VISION) {
     context.globalAlpha = 0.9;

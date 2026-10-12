@@ -1,15 +1,21 @@
-import { AFL_CONFIG, EDITORIAL_CONFIG } from './config';
+import { AFL_CONFIG, AFL_DARK_CONFIG, DOCUMENTARY_CONFIG, EDITORIAL_CONFIG, TECH_DEMO_CONFIG } from './config';
 import type { VisionConfig } from './types';
 
-export type PresetName = 'AFL' | 'Editorial' | 'Dense' | 'Sparse' | 'Signal';
+export type PresetName = 'Editorial' | 'Documentary' | 'Tech Demo' | 'AFL' | 'AFL Dark';
 
 export const PRESETS: Record<PresetName, VisionConfig> = {
-  AFL: { ...AFL_CONFIG },
   Editorial: { ...EDITORIAL_CONFIG },
-  Dense: { ...AFL_CONFIG, threshold: 38, maxPoints: 74, minDistance: 28, density: 72, connectionAmount: 42, labelAmount: 34, bracketAmount: 35 },
-  Sparse: { ...AFL_CONFIG, threshold: 57, maxPoints: 28, minDistance: 58, density: 34, connectionAmount: 14, labelAmount: 12, bracketAmount: 12 },
-  Signal: { ...AFL_CONFIG, mode: 'edges', threshold: 42, density: 58, chaos: 48, connectionAmount: 19, labelAmount: 38, bracketAmount: 30, pointSize: 1.6 },
+  Documentary: { ...DOCUMENTARY_CONFIG },
+  'Tech Demo': { ...TECH_DEMO_CONFIG },
+  AFL: { ...AFL_CONFIG },
+  'AFL Dark': { ...AFL_DARK_CONFIG },
 };
+
+export const PRESET_NAMES = Object.keys(PRESETS) as PresetName[];
+
+export function isPresetName(value: string): value is PresetName {
+  return Object.prototype.hasOwnProperty.call(PRESETS, value);
+}
 
 function differentInteger(min: number, max: number, current: number) {
   if (max <= min) return min;
@@ -40,6 +46,7 @@ export function randomizeLook(config: VisionConfig): VisionConfig {
     maxPoints: differentInteger(8, 100, config.maxPoints),
     minDistance: differentInteger(12, 90, config.minDistance),
     motionBias: differentInteger(0, 100, config.motionBias),
+    motionDensity: differentInteger(0, 100, config.motionDensity),
     density: differentInteger(10, 100, config.density),
     chaos: differentInteger(0, 100, config.chaos),
     connectionsEnabled: !config.connectionsEnabled,
@@ -60,5 +67,6 @@ export function randomizeLook(config: VisionConfig): VisionConfig {
     boxHold: differentStep(200, 2200, 50, config.boxHold),
     boxSmoothness: differentInteger(0, 100, config.boxSmoothness),
     boxStrength: differentInteger(10, 100, config.boxStrength),
+    subjectLock: !config.subjectLock,
   };
 }
